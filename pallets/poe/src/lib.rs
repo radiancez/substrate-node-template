@@ -13,6 +13,9 @@ mod pallet_mod {
 	use frame_support::pallet_prelude::*;
 	use frame_system::pallet_prelude::*;
 
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	// config
+
 	#[pallet::config]
 	pub trait Config: frame_system::Config {
 		type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
@@ -20,16 +23,20 @@ mod pallet_mod {
 		type MaxClaimLength: Get<u32>;
 	}
 
-	#[pallet::pallet]
-	pub struct Pallet<T>(_);
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	// storage
 
 	#[pallet::storage]
+	#[pallet::getter(fn proofs)]
 	pub type Proofs<T: Config> = StorageMap<
 		_,
 		Blake2_128Concat,
 		BoundedVec<u8, T::MaxClaimLength>,
 		(T::AccountId, T::BlockNumber),
 	>;
+
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	// event & error
 
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
@@ -46,6 +53,12 @@ mod pallet_mod {
 		NotClaimOwner,
 		TransferToOwner,
 	}
+
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	// pallet
+
+	#[pallet::pallet]
+	pub struct Pallet<T>(_);
 
 	#[pallet::hooks]
 	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {}
