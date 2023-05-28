@@ -275,7 +275,10 @@ impl pallet_poe::Config for Runtime {
 
 impl pallet_kitties::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
+	type KittyGenesRandomness = InsecureRandomnessCollectiveFlip;
 }
+
+impl pallet_insecure_randomness_collective_flip::Config for Runtime {}
 
 // Create the runtime by composing the FRAME pallets that were previously configured.
 construct_runtime!(
@@ -296,6 +299,7 @@ construct_runtime!(
 		TemplateModule: pallet_template,
 		PoeModule: pallet_poe,
 		KittiesModule: pallet_kitties,
+		InsecureRandomnessCollectiveFlip: pallet_insecure_randomness_collective_flip,
 	}
 );
 

@@ -4,8 +4,9 @@ pub use pallet_mod::*;
 
 #[frame_support::pallet]
 mod pallet_mod {
-	use frame_support::pallet_prelude::*;
+	use frame_support::{pallet_prelude::*, traits::Randomness};
 	use frame_system::pallet_prelude::*;
+	use sp_io::hashing::blake2_128;
 
 	pub type KittyId = u32;
 	#[derive(
@@ -19,6 +20,7 @@ mod pallet_mod {
 	#[pallet::config]
 	pub trait Config: frame_system::Config {
 		type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
+		type KittyGenesRandomness: Randomness<Self::Hash, Self::BlockNumber>;
 	}
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -38,8 +40,7 @@ mod pallet_mod {
 
 	#[pallet::storage]
 	#[pallet::getter(fn kitty_parents)]
-	pub type KittyParents<T: Config> =
-		StorageMap<_, Blake2_128Concat, KittyId, (KittyId, KittyId)>;
+	pub type KittyParents<T: Config> = StorageMap<_, Blake2_128Concat, KittyId, (KittyId, KittyId)>;
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// event & error
@@ -77,7 +78,7 @@ mod pallet_mod {
 			let operator = ensure_signed(origin)?;
 
 			let kitty_id = Self::generate_next_kitty_id()?;
-			let kitty = Kitty(Self::random_genes(&operator));
+			let kitty = Kitty(Self::random_kitty_genes(&operator));
 
 			Kitties::<T>::insert(kitty_id, &kitty);
 			KittyOwner::<T>::insert(kitty_id, &operator);
@@ -98,7 +99,7 @@ mod pallet_mod {
 			let parent_1 = Self::kitties(parent_id_1).ok_or(Error::<T>::KittyNotExist)?;
 			let parent_2 = Self::kitties(parent_id_2).ok_or(Error::<T>::KittyNotExist)?;
 
-			let selector = Self::random_genes(&operator);
+			let selector = Self::random_kitty_genes(&operator);
 			let mut genes = <[u8; 16]>::default();
 			for i in 0..parent_1.0.len() {
 				genes[i] = (parent_1.0[i] & selector[i]) | (parent_2.0[i] & !selector[i])
@@ -116,7 +117,7 @@ mod pallet_mod {
 
 		#[pallet::call_index(2)]
 		#[pallet::weight(0)]
-		pub fn transfer(
+		pub fn transfer_kitty(
 			origin: OriginFor<T>,
 			recipient: T::AccountId,
 			kitty_id: KittyId,
@@ -141,8 +142,13 @@ mod pallet_mod {
 			})
 		}
 
-		fn random_genes(_: &T::AccountId) -> [u8; 16] {
-			<[u8; 16]>::default()
+		fn random_kitty_genes(operator: &T::AccountId) -> [u8; 16] {
+			let payload = (
+				T::KittyGenesRandomness::random_seed(),
+				&operator,
+				<frame_system::Pallet<T>>::extrinsic_index(),
+			);
+			payload.using_encoded(blake2_128)
 		}
 	}
 }
