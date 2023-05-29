@@ -20,7 +20,10 @@ fn create_claim_works() {
 		// 创建存证
 		assert_ok!(ThisPallet::create_claim(signer, claim.clone()));
 		// 检查存证
-		assert_eq!(Proofs::<Test>::get(&claim), Some((ACCOUNT_ID_1, Pallet::<Test>::block_number())));
+		assert_eq!(
+			Proofs::<Test>::get(&claim),
+			Some((ACCOUNT_ID_1, Pallet::<Test>::block_number()))
+		);
 	})
 }
 
@@ -38,7 +41,10 @@ fn create_claim_failed_when_claim_exist() {
 			Error::<Test>::ClaimAlreadyExist
 		);
 		// 检查存证
-		assert_eq!(Proofs::<Test>::get(&claim), Some((ACCOUNT_ID_1, Pallet::<Test>::block_number())));
+		assert_eq!(
+			Proofs::<Test>::get(&claim),
+			Some((ACCOUNT_ID_1, Pallet::<Test>::block_number()))
+		);
 	});
 }
 
@@ -85,7 +91,10 @@ fn revoke_claim_failed_when_not_owner() {
 			Error::<Test>::NotClaimOwner
 		);
 		// 检查存证
-		assert_eq!(Proofs::<Test>::get(&claim), Some((ACCOUNT_ID_1, Pallet::<Test>::block_number())));
+		assert_eq!(
+			Proofs::<Test>::get(&claim),
+			Some((ACCOUNT_ID_1, Pallet::<Test>::block_number()))
+		);
 	})
 }
 
@@ -100,7 +109,10 @@ fn transfer_claim_works() {
 		// 转移存证
 		assert_ok!(ThisPallet::transfer_claim(signer, ACCOUNT_ID_2, claim.clone()));
 		// 检查存证
-		assert_eq!(Proofs::<Test>::get(&claim), Some((ACCOUNT_ID_2, Pallet::<Test>::block_number())));
+		assert_eq!(
+			Proofs::<Test>::get(&claim),
+			Some((ACCOUNT_ID_2, Pallet::<Test>::block_number()))
+		);
 	})
 }
 
@@ -135,7 +147,10 @@ fn transfer_claim_failed_when_not_owner() {
 			Error::<Test>::NotClaimOwner
 		);
 		// 检查存证
-		assert_eq!(Proofs::<Test>::get(&claim), Some((ACCOUNT_ID_1, Pallet::<Test>::block_number())));
+		assert_eq!(
+			Proofs::<Test>::get(&claim),
+			Some((ACCOUNT_ID_1, Pallet::<Test>::block_number()))
+		);
 	})
 }
 
@@ -153,6 +168,9 @@ fn transfer_claim_failed_when_transfer_to_owner() {
 			Error::<Test>::TransferToOwner
 		);
 		// 检查存证
-		assert_eq!(Proofs::<Test>::get(&claim), Some((ACCOUNT_ID_1, Pallet::<Test>::block_number())));
+		assert_eq!(
+			Proofs::<Test>::get(&claim),
+			Some((ACCOUNT_ID_1, Pallet::<Test>::block_number()))
+		);
 	})
 }
