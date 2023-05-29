@@ -2,6 +2,12 @@
 
 pub use pallet_mod::*;
 
+#[cfg(test)]
+mod mock;
+
+#[cfg(test)]
+mod tests;
+
 #[frame_support::pallet]
 mod pallet_mod {
 	use frame_support::{pallet_prelude::*, traits::Randomness};
@@ -48,9 +54,9 @@ mod pallet_mod {
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config> {
-		KittyCreated { operator: T::AccountId, kitty_id: KittyId, kitty: Kitty },
-		KittyBred { operator: T::AccountId, kitty_id: KittyId, kitty: Kitty },
-		KittyTransferred { operator: T::AccountId, recipient: T::AccountId, kitty_id: KittyId },
+		KittyCreated { signer: T::AccountId, kitty_id: KittyId, kitty: Kitty },
+		KittyBred { signer: T::AccountId, kitty_id: KittyId, kitty: Kitty },
+		KittyTransferred { signer: T::AccountId, recipient: T::AccountId, kitty_id: KittyId },
 	}
 
 	#[pallet::error]
@@ -75,14 +81,14 @@ mod pallet_mod {
 		#[pallet::call_index(0)]
 		#[pallet::weight(0)]
 		pub fn create_kitty(origin: OriginFor<T>) -> DispatchResult {
-			let operator = ensure_signed(origin)?;
+			let signer = ensure_signed(origin)?;
 
 			let kitty_id = Self::generate_next_kitty_id()?;
-			let kitty = Kitty(Self::random_kitty_genes(&operator));
+			let kitty = Kitty(Self::random_kitty_genes(&signer));
 
 			Kitties::<T>::insert(kitty_id, &kitty);
-			KittyOwner::<T>::insert(kitty_id, &operator);
-			Self::deposit_event(Event::KittyCreated { operator, kitty_id, kitty });
+			KittyOwner::<T>::insert(kitty_id, &signer);
+			Self::deposit_event(Event::KittyCreated { signer, kitty_id, kitty });
 			Ok(())
 		}
 
@@ -93,13 +99,13 @@ mod pallet_mod {
 			parent_id_1: KittyId,
 			parent_id_2: KittyId,
 		) -> DispatchResult {
-			let operator = ensure_signed(origin)?;
+			let signer = ensure_signed(origin)?;
 
 			ensure!(parent_id_1 != parent_id_2, Error::<T>::SameParentKittyId);
 			let parent_1 = Self::kitties(parent_id_1).ok_or(Error::<T>::KittyNotExist)?;
 			let parent_2 = Self::kitties(parent_id_2).ok_or(Error::<T>::KittyNotExist)?;
 
-			let selector = Self::random_kitty_genes(&operator);
+			let selector = Self::random_kitty_genes(&signer);
 			let mut genes = <[u8; 16]>::default();
 			for i in 0..parent_1.0.len() {
 				genes[i] = (parent_1.0[i] & selector[i]) | (parent_2.0[i] & !selector[i])
@@ -109,9 +115,9 @@ mod pallet_mod {
 			let kitty = Kitty(genes);
 
 			Kitties::<T>::insert(kitty_id, &kitty);
-			KittyOwner::<T>::insert(kitty_id, &operator);
+			KittyOwner::<T>::insert(kitty_id, &signer);
 			KittyParents::<T>::insert(kitty_id, (parent_id_1, parent_id_2));
-			Self::deposit_event(Event::KittyBred { operator, kitty_id, kitty });
+			Self::deposit_event(Event::KittyBred { signer, kitty_id, kitty });
 			Ok(())
 		}
 
@@ -122,13 +128,13 @@ mod pallet_mod {
 			recipient: T::AccountId,
 			kitty_id: KittyId,
 		) -> DispatchResult {
-			let operator = ensure_signed(origin)?;
+			let signer = ensure_signed(origin)?;
 
 			let owner = Self::kitty_owner(kitty_id).ok_or(Error::<T>::KittyNotExist)?;
-			ensure!(operator == owner, Error::<T>::NotKittyOwner);
+			ensure!(signer == owner, Error::<T>::NotKittyOwner);
 
 			KittyOwner::<T>::insert(kitty_id, &recipient);
-			Self::deposit_event(Event::KittyTransferred { operator, recipient, kitty_id });
+			Self::deposit_event(Event::KittyTransferred { signer, recipient, kitty_id });
 			Ok(())
 		}
 	}
@@ -142,10 +148,10 @@ mod pallet_mod {
 			})
 		}
 
-		fn random_kitty_genes(operator: &T::AccountId) -> [u8; 16] {
+		fn random_kitty_genes(account_id: &T::AccountId) -> [u8; 16] {
 			let payload = (
 				T::KittyGenesRandomness::random_seed(),
-				&operator,
+				&account_id,
 				<frame_system::Pallet<T>>::extrinsic_index(),
 			);
 			payload.using_encoded(blake2_128)

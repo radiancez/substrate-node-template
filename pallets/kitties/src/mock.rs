@@ -16,6 +16,7 @@ frame_support::construct_runtime!(
 		UncheckedExtrinsic = UncheckedExtrinsic,
 	{
 		System: frame_system,
+		InsecureRandomnessCollectiveFlip: pallet_insecure_randomness_collective_flip,
 		ThisPallet: crate,
 	}
 );
@@ -47,12 +48,17 @@ impl frame_system::Config for Test {
 	type MaxConsumers = ConstU32<16>;
 }
 
+impl pallet_insecure_randomness_collective_flip::Config for Test {}
+
 impl crate::Config for Test {
 	type RuntimeEvent = RuntimeEvent;
-	type MaxClaimLength = ConstU32<10>;
+	type KittyGenesRandomness = InsecureRandomnessCollectiveFlip;
 }
 
 // Build genesis storage according to the mock runtime.
 pub fn new_test_ext() -> sp_io::TestExternalities {
-	frame_system::GenesisConfig::default().build_storage::<Test>().unwrap().into()
+	let mut externalities: sp_io::TestExternalities =
+		frame_system::GenesisConfig::default().build_storage::<Test>().unwrap().into();
+	externalities.execute_with(|| System::set_block_number(1));
+	externalities
 }

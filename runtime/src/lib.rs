@@ -263,6 +263,8 @@ impl pallet_sudo::Config for Runtime {
 	type RuntimeCall = RuntimeCall;
 }
 
+impl pallet_insecure_randomness_collective_flip::Config for Runtime {}
+
 /// Configure the pallet-template in pallets/template.
 impl pallet_template::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
@@ -277,8 +279,6 @@ impl pallet_kitties::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type KittyGenesRandomness = InsecureRandomnessCollectiveFlip;
 }
-
-impl pallet_insecure_randomness_collective_flip::Config for Runtime {}
 
 // Create the runtime by composing the FRAME pallets that were previously configured.
 construct_runtime!(
@@ -295,11 +295,11 @@ construct_runtime!(
 		Balances: pallet_balances,
 		TransactionPayment: pallet_transaction_payment,
 		Sudo: pallet_sudo,
+		InsecureRandomnessCollectiveFlip: pallet_insecure_randomness_collective_flip,
 		// Include the custom logic from the pallet-template in the runtime.
 		TemplateModule: pallet_template,
-		PoeModule: pallet_poe,
-		KittiesModule: pallet_kitties,
-		InsecureRandomnessCollectiveFlip: pallet_insecure_randomness_collective_flip,
+		PalletPoe: pallet_poe,
+		PalletKitties: pallet_kitties,
 	}
 );
 

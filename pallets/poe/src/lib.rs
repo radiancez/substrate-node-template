@@ -41,9 +41,9 @@ mod pallet_mod {
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config> {
-		ClaimCreated(T::AccountId, BoundedVec<u8, T::MaxClaimLength>),
-		ClaimRevoked(T::AccountId, BoundedVec<u8, T::MaxClaimLength>),
-		ClaimTransferred(T::AccountId, T::AccountId, BoundedVec<u8, T::MaxClaimLength>),
+		ClaimCreated{signer: T::AccountId, claim: BoundedVec<u8, T::MaxClaimLength>},
+		ClaimRevoked{signer: T::AccountId, claim: BoundedVec<u8, T::MaxClaimLength>},
+		ClaimTransferred{signer: T::AccountId, recipient: T::AccountId, claim: BoundedVec<u8, T::MaxClaimLength>},
 	}
 
 	#[pallet::error]
@@ -79,7 +79,7 @@ mod pallet_mod {
 				&claim,
 				(signer.clone(), frame_system::Pallet::<T>::block_number()),
 			);
-			Self::deposit_event(Event::ClaimCreated(signer, claim));
+			Self::deposit_event(Event::ClaimCreated{signer, claim});
 			Ok(())
 		}
 
@@ -96,7 +96,7 @@ mod pallet_mod {
 			ensure!(owner == signer, Error::<T>::NotClaimOwner);
 
 			Proofs::<T>::remove(&claim);
-			Self::deposit_event(Event::ClaimRevoked(signer, claim));
+			Self::deposit_event(Event::ClaimRevoked{signer, claim});
 			Ok(())
 		}
 
@@ -104,7 +104,7 @@ mod pallet_mod {
 		#[pallet::weight(0)]
 		pub fn transfer_claim(
 			origin: OriginFor<T>,
-			dest: T::AccountId,
+			recipient: T::AccountId,
 			claim: BoundedVec<u8, T::MaxClaimLength>,
 		) -> DispatchResult {
 			let signer = ensure_signed(origin)?;
@@ -112,10 +112,10 @@ mod pallet_mod {
 			let (owner, _block_number) =
 				Proofs::<T>::get(&claim).ok_or(Error::<T>::ClaimNotExist)?;
 			ensure!(signer == owner, Error::<T>::NotClaimOwner);
-			ensure!(signer != dest, Error::<T>::TransferToOwner);
+			ensure!(signer != recipient, Error::<T>::TransferToOwner);
 
-			Proofs::<T>::insert(&claim, (dest.clone(), frame_system::Pallet::<T>::block_number()));
-			Self::deposit_event(Event::ClaimTransferred(signer, dest, claim));
+			Proofs::<T>::insert(&claim, (recipient.clone(), frame_system::Pallet::<T>::block_number()));
+			Self::deposit_event(Event::ClaimTransferred{signer, recipient, claim});
 			Ok(())
 		}
 	}
