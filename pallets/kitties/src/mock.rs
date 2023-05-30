@@ -17,7 +17,7 @@ frame_support::construct_runtime!(
 	{
 		System: frame_system,
 		InsecureRandomnessCollectiveFlip: pallet_insecure_randomness_collective_flip,
-		ThisPallet: crate,
+		PalletKitties: crate,
 	}
 );
 
@@ -57,8 +57,5 @@ impl crate::Config for Test {
 
 // Build genesis storage according to the mock runtime.
 pub fn new_test_ext() -> sp_io::TestExternalities {
-	let mut externalities: sp_io::TestExternalities =
-		frame_system::GenesisConfig::default().build_storage::<Test>().unwrap().into();
-	externalities.execute_with(|| System::set_block_number(1));
-	externalities
+	frame_system::GenesisConfig::default().build_storage::<Test>().unwrap().into()
 }

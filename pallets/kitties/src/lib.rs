@@ -1,6 +1,6 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
-pub use pallet_mod::*;
+pub use pallet::*;
 
 #[cfg(test)]
 mod mock;
@@ -9,18 +9,19 @@ mod mock;
 mod tests;
 
 #[frame_support::pallet]
-mod pallet_mod {
+mod pallet {
 	use frame_support::{pallet_prelude::*, traits::Randomness};
 	use frame_system::pallet_prelude::*;
 	use sp_io::hashing::blake2_128;
 
 	pub type KittyId = u32;
+	pub type KittyGenes = [u8; 16];
 	#[derive(
 		Clone, Copy, PartialEq, Eq, Default, TypeInfo, Encode, Decode, MaxEncodedLen, RuntimeDebug,
 	)]
-	pub struct Kitty(pub [u8; 16]);
+	pub struct Kitty(pub KittyGenes);
 
-	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	////////////////////////////////////////////////////////////////////////////////////////////////////
 	// config
 
 	#[pallet::config]
@@ -29,7 +30,7 @@ mod pallet_mod {
 		type KittyGenesRandomness: Randomness<Self::Hash, Self::BlockNumber>;
 	}
 
-	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	////////////////////////////////////////////////////////////////////////////////////////////////////
 	// storage
 
 	#[pallet::storage]
@@ -48,15 +49,15 @@ mod pallet_mod {
 	#[pallet::getter(fn kitty_parents)]
 	pub type KittyParents<T: Config> = StorageMap<_, Blake2_128Concat, KittyId, (KittyId, KittyId)>;
 
-	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	////////////////////////////////////////////////////////////////////////////////////////////////////
 	// event & error
 
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config> {
-		KittyCreated { signer: T::AccountId, kitty_id: KittyId, kitty: Kitty },
-		KittyBred { signer: T::AccountId, kitty_id: KittyId, kitty: Kitty },
-		KittyTransferred { signer: T::AccountId, recipient: T::AccountId, kitty_id: KittyId },
+		KittyCreated { account: T::AccountId, kitty_id: KittyId, kitty: Kitty },
+		KittyBred { account: T::AccountId, kitty_id: KittyId, kitty: Kitty },
+		KittyTransferred { sender: T::AccountId, recipient: T::AccountId, kitty_id: KittyId },
 	}
 
 	#[pallet::error]
@@ -67,7 +68,7 @@ mod pallet_mod {
 		NotKittyOwner,
 	}
 
-	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	////////////////////////////////////////////////////////////////////////////////////////////////////
 	// pallet
 
 	#[pallet::pallet]
@@ -88,7 +89,7 @@ mod pallet_mod {
 
 			Kitties::<T>::insert(kitty_id, &kitty);
 			KittyOwner::<T>::insert(kitty_id, &signer);
-			Self::deposit_event(Event::KittyCreated { signer, kitty_id, kitty });
+			Self::deposit_event(Event::KittyCreated { account: signer, kitty_id, kitty });
 			Ok(())
 		}
 
@@ -106,7 +107,7 @@ mod pallet_mod {
 			let parent_2 = Self::kitties(parent_id_2).ok_or(Error::<T>::KittyNotExist)?;
 
 			let selector = Self::random_kitty_genes(&signer);
-			let mut genes = <[u8; 16]>::default();
+			let mut genes = KittyGenes::default();
 			for i in 0..parent_1.0.len() {
 				genes[i] = (parent_1.0[i] & selector[i]) | (parent_2.0[i] & !selector[i])
 			}
@@ -117,7 +118,7 @@ mod pallet_mod {
 			Kitties::<T>::insert(kitty_id, &kitty);
 			KittyOwner::<T>::insert(kitty_id, &signer);
 			KittyParents::<T>::insert(kitty_id, (parent_id_1, parent_id_2));
-			Self::deposit_event(Event::KittyBred { signer, kitty_id, kitty });
+			Self::deposit_event(Event::KittyBred { account: signer, kitty_id, kitty });
 			Ok(())
 		}
 
@@ -134,7 +135,7 @@ mod pallet_mod {
 			ensure!(signer == owner, Error::<T>::NotKittyOwner);
 
 			KittyOwner::<T>::insert(kitty_id, &recipient);
-			Self::deposit_event(Event::KittyTransferred { signer, recipient, kitty_id });
+			Self::deposit_event(Event::KittyTransferred { sender: signer, recipient, kitty_id });
 			Ok(())
 		}
 	}
@@ -148,11 +149,11 @@ mod pallet_mod {
 			})
 		}
 
-		fn random_kitty_genes(account_id: &T::AccountId) -> [u8; 16] {
+		fn random_kitty_genes(account: &T::AccountId) -> KittyGenes {
 			let payload = (
 				T::KittyGenesRandomness::random_seed(),
-				&account_id,
-				<frame_system::Pallet<T>>::extrinsic_index(),
+				&account,
+				frame_system::Pallet::<T>::extrinsic_index(),
 			);
 			payload.using_encoded(blake2_128)
 		}

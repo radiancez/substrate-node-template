@@ -1,6 +1,6 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
-pub use pallet_mod::*;
+pub use pallet::*;
 
 #[cfg(test)]
 mod mock;
@@ -9,11 +9,11 @@ mod mock;
 mod tests;
 
 #[frame_support::pallet]
-mod pallet_mod {
+mod pallet {
 	use frame_support::pallet_prelude::*;
 	use frame_system::pallet_prelude::*;
 
-	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	////////////////////////////////////////////////////////////////////////////////////////////////////
 	// config
 
 	#[pallet::config]
@@ -23,7 +23,7 @@ mod pallet_mod {
 		type MaxClaimLength: Get<u32>;
 	}
 
-	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	////////////////////////////////////////////////////////////////////////////////////////////////////
 	// storage
 
 	#[pallet::storage]
@@ -35,22 +35,22 @@ mod pallet_mod {
 		(T::AccountId, T::BlockNumber),
 	>;
 
-	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	////////////////////////////////////////////////////////////////////////////////////////////////////
 	// event & error
 
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config> {
 		ClaimCreated {
-			signer: T::AccountId,
+			account: T::AccountId,
 			claim: BoundedVec<u8, T::MaxClaimLength>,
 		},
 		ClaimRevoked {
-			signer: T::AccountId,
+			account: T::AccountId,
 			claim: BoundedVec<u8, T::MaxClaimLength>,
 		},
 		ClaimTransferred {
-			signer: T::AccountId,
+			sender: T::AccountId,
 			recipient: T::AccountId,
 			claim: BoundedVec<u8, T::MaxClaimLength>,
 		},
@@ -64,7 +64,7 @@ mod pallet_mod {
 		TransferToOwner,
 	}
 
-	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	////////////////////////////////////////////////////////////////////////////////////////////////////
 	// pallet
 
 	#[pallet::pallet]
@@ -89,7 +89,7 @@ mod pallet_mod {
 				&claim,
 				(signer.clone(), frame_system::Pallet::<T>::block_number()),
 			);
-			Self::deposit_event(Event::ClaimCreated { signer, claim });
+			Self::deposit_event(Event::ClaimCreated { account: signer, claim });
 			Ok(())
 		}
 
@@ -106,7 +106,7 @@ mod pallet_mod {
 			ensure!(owner == signer, Error::<T>::NotClaimOwner);
 
 			Proofs::<T>::remove(&claim);
-			Self::deposit_event(Event::ClaimRevoked { signer, claim });
+			Self::deposit_event(Event::ClaimRevoked { account: signer, claim });
 			Ok(())
 		}
 
@@ -128,7 +128,7 @@ mod pallet_mod {
 				&claim,
 				(recipient.clone(), frame_system::Pallet::<T>::block_number()),
 			);
-			Self::deposit_event(Event::ClaimTransferred { signer, recipient, claim });
+			Self::deposit_event(Event::ClaimTransferred { sender: signer, recipient, claim });
 			Ok(())
 		}
 	}

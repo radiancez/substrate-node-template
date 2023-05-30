@@ -31,10 +31,10 @@ pallet-insecure-randomness-collective-flip = { git = "https://github.com/parityt
 default = ["std"]
 std = [
 	"codec/std",
+	"scale-info/std",
 	"frame-benchmarking?/std",
 	"frame-support/std",
 	"frame-system/std",
-	"scale-info/std",
 	"sp-io/std",
 ]
 runtime-benchmarks = ["frame-benchmarking/runtime-benchmarks"]
