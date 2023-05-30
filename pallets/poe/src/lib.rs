@@ -103,7 +103,7 @@ mod pallet {
 
 			let (owner, _block_number) =
 				Proofs::<T>::get(&claim).ok_or(Error::<T>::ClaimNotExist)?;
-			ensure!(owner == signer, Error::<T>::NotClaimOwner);
+			ensure!(signer == owner, Error::<T>::NotClaimOwner);
 
 			Proofs::<T>::remove(&claim);
 			Self::deposit_event(Event::ClaimRevoked { account: signer, claim });
