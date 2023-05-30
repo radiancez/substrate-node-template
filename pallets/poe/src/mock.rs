@@ -54,5 +54,11 @@ impl crate::Config for Test {
 
 // Build genesis storage according to the mock runtime.
 pub fn new_test_ext() -> sp_io::TestExternalities {
-	frame_system::GenesisConfig::default().build_storage::<Test>().unwrap().into()
+	let mut ext: sp_io::TestExternalities =
+		frame_system::GenesisConfig::default().build_storage::<Test>().unwrap().into();
+	ext.execute_with(|| {
+		// Go past genesis block so events get deposited
+		System::set_block_number(1);
+	});
+	ext
 }
