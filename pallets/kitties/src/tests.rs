@@ -1,4 +1,4 @@
-use crate::{mock::*, Error, Event, KittyId, NextKittyId};
+use crate::{mock::*, Error, Event, Kitty, KittyId, NextKittyId};
 use frame_support::{assert_noop, assert_ok};
 
 const ACCOUNT_ID_1: u64 = 1;
@@ -16,16 +16,12 @@ fn create_kitty() {
 		// create kitty
 		assert_ok!(PalletKitties::create_kitty(signer.clone()));
 		assert_eq!(PalletKitties::next_kitty_id(), KITTY_ID_0 + 1);
-		assert_eq!(PalletKitties::kitties(KITTY_ID_0).is_some(), true);
 		assert_eq!(PalletKitties::kitty_owner(KITTY_ID_0), Some(ACCOUNT_ID_1));
 		assert_eq!(PalletKitties::kitty_parents(KITTY_ID_0), None);
+		let kitty = Kitty(PalletKitties::random_kitty_genes(&ACCOUNT_ID_1));
+		assert_eq!(PalletKitties::kitties(KITTY_ID_0), Some(kitty));
 		System::assert_last_event(
-			Event::KittyCreated {
-				account: ACCOUNT_ID_1,
-				kitty_id: KITTY_ID_0,
-				kitty: PalletKitties::kitties(KITTY_ID_0).unwrap(),
-			}
-			.into(),
+			Event::KittyCreated { account: ACCOUNT_ID_1, kitty_id: KITTY_ID_0, kitty }.into(),
 		);
 
 		// KittyId 溢出
@@ -62,16 +58,14 @@ fn bred_kitty() {
 		// bred kitty
 		assert_ok!(PalletKitties::bred_kitty(signer, parent_id_0, parent_id_1));
 		assert_eq!(PalletKitties::next_kitty_id(), child_id + 1);
-		assert_eq!(PalletKitties::kitties(child_id).is_some(), true);
 		assert_eq!(PalletKitties::kitty_owner(child_id), Some(ACCOUNT_ID_1));
 		assert_eq!(PalletKitties::kitty_parents(child_id), Some((parent_id_0, parent_id_1)));
+		let parent_1 = Kitty(PalletKitties::random_kitty_genes(&ACCOUNT_ID_1));
+		let parent_2 = Kitty(PalletKitties::random_kitty_genes(&ACCOUNT_ID_1));
+		let child = Kitty(PalletKitties::child_kitty_genes(&ACCOUNT_ID_1, &parent_1, &parent_2));
+		assert_eq!(PalletKitties::kitties(child_id), Some(child));
 		System::assert_last_event(
-			Event::KittyBred {
-				account: ACCOUNT_ID_1,
-				kitty_id: child_id,
-				kitty: PalletKitties::kitties(child_id).unwrap(),
-			}
-			.into(),
+			Event::KittyBred { account: ACCOUNT_ID_1, kitty_id: child_id, kitty: child }.into(),
 		);
 	});
 }

@@ -105,15 +105,8 @@ mod pallet {
 			ensure!(parent_id_1 != parent_id_2, Error::<T>::SameParentKittyId);
 			let parent_1 = Self::kitties(parent_id_1).ok_or(Error::<T>::KittyNotExist)?;
 			let parent_2 = Self::kitties(parent_id_2).ok_or(Error::<T>::KittyNotExist)?;
-
-			let selector = Self::random_kitty_genes(&signer);
-			let mut genes = KittyGenes::default();
-			for i in 0..parent_1.0.len() {
-				genes[i] = (parent_1.0[i] & selector[i]) | (parent_2.0[i] & !selector[i])
-			}
-
 			let kitty_id = Self::generate_next_kitty_id()?;
-			let kitty = Kitty(genes);
+			let kitty = Kitty(Self::child_kitty_genes(&signer, &parent_1, &parent_2));
 
 			Kitties::<T>::insert(kitty_id, &kitty);
 			KittyOwner::<T>::insert(kitty_id, &signer);
@@ -149,13 +142,26 @@ mod pallet {
 			})
 		}
 
-		fn random_kitty_genes(account: &T::AccountId) -> KittyGenes {
+		pub(crate) fn random_kitty_genes(account: &T::AccountId) -> KittyGenes {
 			let payload = (
 				T::KittyGenesRandomness::random_seed(),
 				&account,
 				frame_system::Pallet::<T>::extrinsic_index(),
 			);
 			payload.using_encoded(blake2_128)
+		}
+
+		pub(crate) fn child_kitty_genes(
+			account: &T::AccountId,
+			parent_1: &Kitty,
+			parent_2: &Kitty,
+		) -> KittyGenes {
+			let selector = Self::random_kitty_genes(&account);
+			let mut genes = KittyGenes::default();
+			for i in 0..parent_1.0.len() {
+				genes[i] = (parent_1.0[i] & selector[i]) | (parent_2.0[i] & !selector[i])
+			}
+			return genes
 		}
 	}
 }
