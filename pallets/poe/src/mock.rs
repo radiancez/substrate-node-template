@@ -20,6 +20,7 @@ frame_support::construct_runtime!(
 	}
 );
 
+// frame-system
 impl frame_system::Config for Test {
 	type BaseCallFilter = frame_support::traits::Everything;
 	type BlockWeights = ();
@@ -47,6 +48,7 @@ impl frame_system::Config for Test {
 	type MaxConsumers = ConstU32<16>;
 }
 
+// curent pallet
 impl crate::Config for Test {
 	type RuntimeEvent = RuntimeEvent;
 	type MaxClaimLength = ConstU32<10>;

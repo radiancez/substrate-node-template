@@ -42,7 +42,7 @@ mod pallet {
 		type KittyPrice: Get<Balance<Self>>;
 	}
 
-	pub type Balance<T> =
+	type Balance<T> =
 		<<T as Config>::Currency as Currency<<T as frame_system::Config>::AccountId>>::Balance;
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////
