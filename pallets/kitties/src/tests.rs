@@ -1,13 +1,19 @@
 use crate::{mock::*, Error, Event, Kitty, KittyId, NextKittyId};
-use frame_support::{assert_noop, assert_ok};
+use frame_support::{assert_noop, assert_ok, pallet_prelude::DispatchResultWithPostInfo};
 
-const ACCOUNT_ID_1: u64 = 1;
-const ACCOUNT_ID_2: u64 = 2;
+const ACCOUNT_ID_1: AccountId = 1;
+const ACCOUNT_ID_2: AccountId = 2;
 const KITTY_ID_0: KittyId = 0;
+
+fn init_balance(account: AccountId, new_free: Balance) -> DispatchResultWithPostInfo {
+	Balances::set_balance(RuntimeOrigin::root(), account, new_free, 0)
+}
 
 #[test]
 fn create_kitty() {
 	new_test_ext().execute_with(|| {
+		assert_ok!(init_balance(ACCOUNT_ID_1, 10_000_000));
+
 		let signer = RuntimeOrigin::signed(ACCOUNT_ID_1);
 
 		// 检查初始状态
@@ -33,6 +39,8 @@ fn create_kitty() {
 #[test]
 fn bred_kitty() {
 	new_test_ext().execute_with(|| {
+		assert_ok!(init_balance(ACCOUNT_ID_1, 10_000_000));
+
 		let signer = RuntimeOrigin::signed(ACCOUNT_ID_1);
 
 		let parent_id_0 = KITTY_ID_0;
@@ -54,14 +62,14 @@ fn bred_kitty() {
 		assert_ok!(PalletKitties::create_kitty(signer.clone()));
 		assert_ok!(PalletKitties::create_kitty(signer.clone()));
 		assert_eq!(PalletKitties::next_kitty_id(), child_id);
+		let parent_1 = Kitty(PalletKitties::random_kitty_dna(&ACCOUNT_ID_1));
+		let parent_2 = Kitty(PalletKitties::random_kitty_dna(&ACCOUNT_ID_1));
 
 		// bred kitty
 		assert_ok!(PalletKitties::bred_kitty(signer, parent_id_0, parent_id_1));
 		assert_eq!(PalletKitties::next_kitty_id(), child_id + 1);
 		assert_eq!(PalletKitties::kitty_owner(child_id), Some(ACCOUNT_ID_1));
 		assert_eq!(PalletKitties::kitty_parents(child_id), Some((parent_id_0, parent_id_1)));
-		let parent_1 = Kitty(PalletKitties::random_kitty_dna(&ACCOUNT_ID_1));
-		let parent_2 = Kitty(PalletKitties::random_kitty_dna(&ACCOUNT_ID_1));
 		let child = Kitty(PalletKitties::child_kitty_dna(&ACCOUNT_ID_1, &parent_1, &parent_2));
 		assert_eq!(PalletKitties::kitties(child_id), Some(child));
 		System::assert_last_event(
@@ -73,6 +81,9 @@ fn bred_kitty() {
 #[test]
 fn transfer_kitty() {
 	new_test_ext().execute_with(|| {
+		assert_ok!(init_balance(ACCOUNT_ID_1, 10_000_000));
+		assert_ok!(init_balance(ACCOUNT_ID_2, 10_000_000));
+
 		let signer = RuntimeOrigin::signed(ACCOUNT_ID_1);
 		let signer_2 = RuntimeOrigin::signed(ACCOUNT_ID_2);
 
@@ -108,6 +119,75 @@ fn transfer_kitty() {
 				kitty_id: KITTY_ID_0,
 			}
 			.into(),
+		);
+	});
+}
+
+#[test]
+fn sale_kitty() {
+	new_test_ext().execute_with(|| {
+		assert_ok!(Balances::set_balance(RuntimeOrigin::root(), ACCOUNT_ID_1, 10_000_000, 0));
+
+		let signer = RuntimeOrigin::signed(ACCOUNT_ID_1);
+		let signer_2 = RuntimeOrigin::signed(ACCOUNT_ID_2);
+
+		// sale 不存在的 kitty
+		assert_noop!(
+			PalletKitties::sale_kitty(signer.clone(), KITTY_ID_0),
+			Error::<Test>::KittyNotExist
+		);
+
+		// sale 不属于自己的 kitty
+		assert_ok!(PalletKitties::create_kitty(signer.clone()));
+		assert_noop!(PalletKitties::sale_kitty(signer_2, KITTY_ID_0), Error::<Test>::NotKittyOwner);
+
+		// sale 上架成功
+		assert_ok!(PalletKitties::sale_kitty(signer.clone(), KITTY_ID_0));
+		System::assert_last_event(
+			Event::KittyOnSale { account: ACCOUNT_ID_1, kitty_id: KITTY_ID_0 }.into(),
+		);
+
+		// 重复上架
+		assert_noop!(
+			PalletKitties::sale_kitty(signer, KITTY_ID_0),
+			Error::<Test>::KittyAlreadyOnSale
+		);
+	});
+}
+
+#[test]
+fn buy_kitty() {
+	new_test_ext().execute_with(|| {
+		assert_ok!(Balances::set_balance(RuntimeOrigin::root(), ACCOUNT_ID_1, 10_000_000, 0));
+		assert_ok!(Balances::set_balance(RuntimeOrigin::root(), ACCOUNT_ID_2, 10_000_000, 0));
+
+		let signer = RuntimeOrigin::signed(ACCOUNT_ID_1);
+		let signer_2 = RuntimeOrigin::signed(ACCOUNT_ID_2);
+
+		// buy 不存在的 kitty
+		assert_noop!(
+			PalletKitties::buy_kitty(signer.clone(), KITTY_ID_0),
+			Error::<Test>::KittyNotExist
+		);
+
+		// buy 自己的 kitty
+		assert_ok!(PalletKitties::create_kitty(signer.clone()));
+		assert_noop!(
+			PalletKitties::buy_kitty(signer.clone(), KITTY_ID_0),
+			Error::<Test>::KittyAlreadyOwned
+		);
+
+		// buy 未上架的 kitty
+		assert_noop!(
+			PalletKitties::buy_kitty(signer_2.clone(), KITTY_ID_0),
+			Error::<Test>::KittyNotOnSale
+		);
+
+		// buy 成功
+		assert_ok!(PalletKitties::sale_kitty(signer.clone(), KITTY_ID_0));
+		assert_ok!(PalletKitties::buy_kitty(signer_2.clone(), KITTY_ID_0));
+		System::assert_last_event(
+			Event::KittyBought { buyer: ACCOUNT_ID_2, kitty_id: KITTY_ID_0 }.into(),
 		);
 	});
 }

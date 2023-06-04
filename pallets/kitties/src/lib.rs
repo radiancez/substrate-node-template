@@ -172,9 +172,9 @@ mod pallet {
 		#[pallet::weight(0)]
 		pub fn sale_kitty(origin: OriginFor<T>, kitty_id: KittyId) -> DispatchResult {
 			let signer = ensure_signed(origin)?;
-			Self::kitties(kitty_id).ok_or(Error::<T>::KittyNotExist)?;
-			ensure!(Self::kitty_owner(kitty_id) == Some(signer.clone()), Error::<T>::NotKittyOwner);
-			ensure!(Self::kitty_on_sale(kitty_id).is_some(), Error::<T>::KittyAlreadyOnSale);
+			let owner = Self::kitty_owner(kitty_id).ok_or(Error::<T>::KittyNotExist)?;
+			ensure!(signer == owner, Error::<T>::NotKittyOwner);
+			ensure!(Self::kitty_on_sale(kitty_id).is_none(), Error::<T>::KittyAlreadyOnSale);
 
 			<KittyOnSale<T>>::insert(kitty_id, ());
 			Self::deposit_event(Event::KittyOnSale { account: signer, kitty_id });

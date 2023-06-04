@@ -27,6 +27,7 @@ frame_support::construct_runtime!(
 );
 
 // frame-system
+pub type AccountId = u64;
 impl frame_system::Config for Test {
 	type BaseCallFilter = frame_support::traits::Everything;
 	type BlockWeights = ();
@@ -38,7 +39,7 @@ impl frame_system::Config for Test {
 	type BlockNumber = u64;
 	type Hash = H256;
 	type Hashing = BlakeTwo256;
-	type AccountId = u64;
+	type AccountId = AccountId;
 	type Lookup = IdentityLookup<Self::AccountId>;
 	type Header = Header;
 	type RuntimeEvent = RuntimeEvent;
@@ -55,7 +56,7 @@ impl frame_system::Config for Test {
 }
 
 // pallet-balances
-type Balance = u128;
+pub type Balance = u128;
 pub const EXISTENTIAL_DEPOSIT: Balance = 500;
 impl pallet_balances::Config for Test {
 	type MaxLocks = ConstU32<50>;
