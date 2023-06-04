@@ -87,6 +87,12 @@ fn transfer_kitty() {
 		let signer = RuntimeOrigin::signed(ACCOUNT_ID_1);
 		let signer_2 = RuntimeOrigin::signed(ACCOUNT_ID_2);
 
+		// transfer 不存在的 kitty
+		assert_noop!(
+			PalletKitties::transfer_kitty(signer.clone(), ACCOUNT_ID_2, KITTY_ID_0),
+			Error::<Test>::KittyNotExist
+		);
+
 		// create kitty
 		assert_ok!(PalletKitties::create_kitty(signer.clone()));
 		assert_eq!(PalletKitties::kitty_owner(KITTY_ID_0), Some(ACCOUNT_ID_1));
@@ -95,6 +101,12 @@ fn transfer_kitty() {
 		assert_noop!(
 			PalletKitties::transfer_kitty(signer_2.clone(), ACCOUNT_ID_1, KITTY_ID_0),
 			Error::<Test>::NotKittyOwner
+		);
+
+		// transfer 给 ower
+		assert_noop!(
+			PalletKitties::transfer_kitty(signer.clone(), ACCOUNT_ID_1, KITTY_ID_0),
+			Error::<Test>::TransferKittyToOwner
 		);
 
 		// transfer 1 -> 2

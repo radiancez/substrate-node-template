@@ -87,6 +87,7 @@ mod pallet {
 		SameParentKittyId,
 		KittyNotExist,
 		NotKittyOwner,
+		TransferKittyToOwner,
 		KittyAlreadyOnSale,
 		KittyNotOnSale,
 		KittyAlreadyOwned,
@@ -162,6 +163,7 @@ mod pallet {
 			let signer = ensure_signed(origin)?;
 			let owner = Self::kitty_owner(kitty_id).ok_or(Error::<T>::KittyNotExist)?;
 			ensure!(signer == owner, Error::<T>::NotKittyOwner);
+			ensure!(signer != recipient, Error::<T>::TransferKittyToOwner);
 
 			KittyOwner::<T>::insert(kitty_id, &recipient);
 			Self::deposit_event(Event::KittyTransferred { sender: signer, recipient, kitty_id });
