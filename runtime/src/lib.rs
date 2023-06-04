@@ -6,6 +6,7 @@
 #[cfg(feature = "std")]
 include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 
+use frame_support::PalletId;
 use pallet_grandpa::AuthorityId as GrandpaId;
 use sp_api::impl_runtime_apis;
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
@@ -275,9 +276,17 @@ impl pallet_poe::Config for Runtime {
 	type MaxClaimLength = ConstU32<512>;
 }
 
+parameter_types! {
+	pub KittiesPalletId: PalletId = PalletId(*b"py/kitty");
+	pub KittyPrice: Balance = EXISTENTIAL_DEPOSIT * 1000;
+}
+
 impl pallet_kitties::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
-	type KittyGenesRandomness = InsecureRandomnessCollectiveFlip;
+	type PalletId = KittiesPalletId;
+	type Currency = Balances;
+	type KittyDnaRandomness = InsecureRandomnessCollectiveFlip;
+	type KittyPrice = KittyPrice;
 }
 
 // Create the runtime by composing the FRAME pallets that were previously configured.

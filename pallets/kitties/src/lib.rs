@@ -10,28 +10,43 @@ mod tests;
 
 #[frame_support::pallet]
 mod pallet {
-	use frame_support::{pallet_prelude::*, traits::Randomness};
+	use frame_support::{
+		pallet_prelude::*,
+		traits::{Currency, ExistenceRequirement, Randomness},
+		PalletId,
+	};
 	use frame_system::pallet_prelude::*;
 	use sp_io::hashing::blake2_128;
+	use sp_runtime::traits::AccountIdConversion;
+
+	////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	pub type KittyId = u32;
-	pub type KittyGenes = [u8; 16];
+	pub type KittyDna = [u8; 16];
+
 	#[derive(
 		Clone, Copy, PartialEq, Eq, Default, TypeInfo, Encode, Decode, MaxEncodedLen, RuntimeDebug,
 	)]
-	pub struct Kitty(pub KittyGenes);
+	pub struct Kitty(pub KittyDna);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////
-	// config
+	/// config
 
 	#[pallet::config]
 	pub trait Config: frame_system::Config {
 		type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
-		type KittyGenesRandomness: Randomness<Self::Hash, Self::BlockNumber>;
+		type PalletId: Get<PalletId>;
+		type Currency: Currency<Self::AccountId>;
+		type KittyDnaRandomness: Randomness<Self::Hash, Self::BlockNumber>;
+		#[pallet::constant]
+		type KittyPrice: Get<Balance<Self>>;
 	}
 
+	pub type Balance<T> =
+		<<T as Config>::Currency as Currency<<T as frame_system::Config>::AccountId>>::Balance;
+
 	////////////////////////////////////////////////////////////////////////////////////////////////////
-	// storage
+	/// storage
 
 	#[pallet::storage]
 	#[pallet::getter(fn next_kitty_id)]
@@ -49,8 +64,12 @@ mod pallet {
 	#[pallet::getter(fn kitty_parents)]
 	pub type KittyParents<T: Config> = StorageMap<_, Blake2_128Concat, KittyId, (KittyId, KittyId)>;
 
+	#[pallet::storage]
+	#[pallet::getter(fn kitty_on_sale)]
+	pub type KittyOnSale<T: Config> = StorageMap<_, Blake2_128Concat, KittyId, ()>;
+
 	////////////////////////////////////////////////////////////////////////////////////////////////////
-	// event & error
+	/// event & error
 
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
@@ -58,6 +77,8 @@ mod pallet {
 		KittyCreated { account: T::AccountId, kitty_id: KittyId, kitty: Kitty },
 		KittyBred { account: T::AccountId, kitty_id: KittyId, kitty: Kitty },
 		KittyTransferred { sender: T::AccountId, recipient: T::AccountId, kitty_id: KittyId },
+		KittyOnSale { account: T::AccountId, kitty_id: KittyId },
+		KittyBought { buyer: T::AccountId, kitty_id: KittyId },
 	}
 
 	#[pallet::error]
@@ -66,10 +87,13 @@ mod pallet {
 		SameParentKittyId,
 		KittyNotExist,
 		NotKittyOwner,
+		KittyAlreadyOnSale,
+		KittyNotOnSale,
+		KittyAlreadyOwned,
 	}
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////
-	// pallet
+	/// pallet
 
 	#[pallet::pallet]
 	pub struct Pallet<T>(_);
@@ -83,10 +107,16 @@ mod pallet {
 		#[pallet::weight(0)]
 		pub fn create_kitty(origin: OriginFor<T>) -> DispatchResult {
 			let signer = ensure_signed(origin)?;
-
 			let kitty_id = Self::generate_next_kitty_id()?;
-			let kitty = Kitty(Self::random_kitty_genes(&signer));
+			let kitty = Kitty(Self::random_kitty_dna(&signer));
+			let price = T::KittyPrice::get();
 
+			T::Currency::transfer(
+				&signer,
+				&Self::get_pallet_account_id(),
+				price,
+				ExistenceRequirement::KeepAlive,
+			)?;
 			Kitties::<T>::insert(kitty_id, &kitty);
 			KittyOwner::<T>::insert(kitty_id, &signer);
 			Self::deposit_event(Event::KittyCreated { account: signer, kitty_id, kitty });
@@ -101,13 +131,20 @@ mod pallet {
 			parent_id_2: KittyId,
 		) -> DispatchResult {
 			let signer = ensure_signed(origin)?;
-
 			ensure!(parent_id_1 != parent_id_2, Error::<T>::SameParentKittyId);
 			let parent_1 = Self::kitties(parent_id_1).ok_or(Error::<T>::KittyNotExist)?;
 			let parent_2 = Self::kitties(parent_id_2).ok_or(Error::<T>::KittyNotExist)?;
-			let kitty_id = Self::generate_next_kitty_id()?;
-			let kitty = Kitty(Self::child_kitty_genes(&signer, &parent_1, &parent_2));
 
+			let kitty_id = Self::generate_next_kitty_id()?;
+			let kitty = Kitty(Self::child_kitty_dna(&signer, &parent_1, &parent_2));
+			let price = T::KittyPrice::get();
+
+			T::Currency::transfer(
+				&signer,
+				&Self::get_pallet_account_id(),
+				price,
+				ExistenceRequirement::KeepAlive,
+			)?;
 			Kitties::<T>::insert(kitty_id, &kitty);
 			KittyOwner::<T>::insert(kitty_id, &signer);
 			KittyParents::<T>::insert(kitty_id, (parent_id_1, parent_id_2));
@@ -123,7 +160,6 @@ mod pallet {
 			kitty_id: KittyId,
 		) -> DispatchResult {
 			let signer = ensure_signed(origin)?;
-
 			let owner = Self::kitty_owner(kitty_id).ok_or(Error::<T>::KittyNotExist)?;
 			ensure!(signer == owner, Error::<T>::NotKittyOwner);
 
@@ -131,9 +167,43 @@ mod pallet {
 			Self::deposit_event(Event::KittyTransferred { sender: signer, recipient, kitty_id });
 			Ok(())
 		}
+
+		#[pallet::call_index(3)]
+		#[pallet::weight(0)]
+		pub fn sale_kitty(origin: OriginFor<T>, kitty_id: KittyId) -> DispatchResult {
+			let signer = ensure_signed(origin)?;
+			Self::kitties(kitty_id).ok_or(Error::<T>::KittyNotExist)?;
+			ensure!(Self::kitty_owner(kitty_id) == Some(signer.clone()), Error::<T>::NotKittyOwner);
+			ensure!(Self::kitty_on_sale(kitty_id).is_some(), Error::<T>::KittyAlreadyOnSale);
+
+			<KittyOnSale<T>>::insert(kitty_id, ());
+			Self::deposit_event(Event::KittyOnSale { account: signer, kitty_id });
+			Ok(())
+		}
+
+		#[pallet::call_index(4)]
+		#[pallet::weight(0)]
+		pub fn buy_kitty(origin: OriginFor<T>, kitty_id: u32) -> DispatchResult {
+			let signer = ensure_signed(origin)?;
+			let owner = Self::kitty_owner(kitty_id).ok_or(Error::<T>::KittyNotExist)?;
+			ensure!(signer != owner, Error::<T>::KittyAlreadyOwned);
+			ensure!(Self::kitty_on_sale(kitty_id).is_some(), Error::<T>::KittyNotOnSale);
+
+			let price = T::KittyPrice::get();
+
+			T::Currency::transfer(&signer, &owner, price, ExistenceRequirement::KeepAlive)?;
+			<KittyOwner<T>>::insert(kitty_id, &signer);
+			<KittyOnSale<T>>::remove(kitty_id);
+			Self::deposit_event(Event::KittyBought { buyer: signer, kitty_id });
+			Ok(())
+		}
 	}
 
 	impl<T: Config> Pallet<T> {
+		fn get_pallet_account_id() -> T::AccountId {
+			T::PalletId::get().into_account_truncating()
+		}
+
 		fn generate_next_kitty_id() -> Result<KittyId, DispatchError> {
 			NextKittyId::<T>::try_mutate(|next_kitty_id| -> Result<KittyId, DispatchError> {
 				let kitty_id = *next_kitty_id;
@@ -142,26 +212,26 @@ mod pallet {
 			})
 		}
 
-		pub(crate) fn random_kitty_genes(account: &T::AccountId) -> KittyGenes {
+		pub(crate) fn random_kitty_dna(account: &T::AccountId) -> KittyDna {
 			let payload = (
-				T::KittyGenesRandomness::random_seed(),
+				T::KittyDnaRandomness::random_seed(),
 				&account,
 				frame_system::Pallet::<T>::extrinsic_index(),
 			);
 			payload.using_encoded(blake2_128)
 		}
 
-		pub(crate) fn child_kitty_genes(
+		pub(crate) fn child_kitty_dna(
 			account: &T::AccountId,
 			parent_1: &Kitty,
 			parent_2: &Kitty,
-		) -> KittyGenes {
-			let selector = Self::random_kitty_genes(&account);
-			let mut genes = KittyGenes::default();
+		) -> KittyDna {
+			let selector = Self::random_kitty_dna(&account);
+			let mut dna = KittyDna::default();
 			for i in 0..parent_1.0.len() {
-				genes[i] = (parent_1.0[i] & selector[i]) | (parent_2.0[i] & !selector[i])
+				dna[i] = (parent_1.0[i] & selector[i]) | (parent_2.0[i] & !selector[i])
 			}
-			return genes
+			return dna
 		}
 	}
 }
