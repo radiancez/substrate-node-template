@@ -264,6 +264,7 @@ impl pallet_sudo::Config for Runtime {
 	type RuntimeCall = RuntimeCall;
 }
 
+// pallet-insecure-randomness-collective-flip
 impl pallet_insecure_randomness_collective_flip::Config for Runtime {}
 
 /// Configure the pallet-template in pallets/template.
@@ -271,16 +272,17 @@ impl pallet_template::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 }
 
+// pallet-poe
 impl pallet_poe::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type MaxClaimLength = ConstU32<512>;
 }
 
+// pallet-kitties
 parameter_types! {
 	pub KittiesPalletId: PalletId = PalletId(*b"py/kitty");
 	pub KittyPrice: Balance = EXISTENTIAL_DEPOSIT * 1000;
 }
-
 impl pallet_kitties::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type PalletId = KittiesPalletId;

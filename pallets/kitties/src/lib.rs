@@ -8,8 +8,11 @@ mod mock;
 #[cfg(test)]
 mod tests;
 
+mod storage;
+
 #[frame_support::pallet]
 mod pallet {
+	use crate::storage;
 	use frame_support::{
 		pallet_prelude::*,
 		traits::{Currency, ExistenceRequirement, Randomness},
@@ -22,12 +25,9 @@ mod pallet {
 	////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	pub type KittyId = u32;
+	pub type KittyName = [u8; 4];
 	pub type KittyDna = [u8; 16];
-
-	#[derive(
-		Clone, Copy, PartialEq, Eq, Default, TypeInfo, Encode, Decode, MaxEncodedLen, RuntimeDebug,
-	)]
-	pub struct Kitty(pub KittyDna);
+	pub type Kitty = storage::v1::Kitty;
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// config
@@ -97,19 +97,24 @@ mod pallet {
 	/// pallet
 
 	#[pallet::pallet]
+	#[pallet::storage_version(storage::v1::STORAGE_VERSION)]
 	pub struct Pallet<T>(_);
 
 	#[pallet::hooks]
-	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {}
+	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
+		fn on_runtime_upgrade() -> Weight {
+			storage::v1::upgrade::<T>()
+		}
+	}
 
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
 		#[pallet::call_index(0)]
 		#[pallet::weight(0)]
-		pub fn create_kitty(origin: OriginFor<T>) -> DispatchResult {
+		pub fn create_kitty(origin: OriginFor<T>, name: KittyName) -> DispatchResult {
 			let signer = ensure_signed(origin)?;
 			let kitty_id = Self::generate_next_kitty_id()?;
-			let kitty = Kitty(Self::random_kitty_dna(&signer));
+			let kitty = Kitty { name, dna: Self::random_kitty_dna(&signer) };
 			let price = T::KittyPrice::get();
 
 			T::Currency::transfer(
@@ -130,6 +135,7 @@ mod pallet {
 			origin: OriginFor<T>,
 			parent_id_1: KittyId,
 			parent_id_2: KittyId,
+			name: KittyName,
 		) -> DispatchResult {
 			let signer = ensure_signed(origin)?;
 			ensure!(parent_id_1 != parent_id_2, Error::<T>::SameParentKittyId);
@@ -137,7 +143,7 @@ mod pallet {
 			let parent_2 = Self::kitties(parent_id_2).ok_or(Error::<T>::KittyNotExist)?;
 
 			let kitty_id = Self::generate_next_kitty_id()?;
-			let kitty = Kitty(Self::child_kitty_dna(&signer, &parent_1, &parent_2));
+			let kitty = Kitty { name, dna: Self::child_kitty_dna(&signer, &parent_1, &parent_2) };
 			let price = T::KittyPrice::get();
 
 			T::Currency::transfer(
@@ -178,7 +184,7 @@ mod pallet {
 			ensure!(signer == owner, Error::<T>::NotKittyOwner);
 			ensure!(Self::kitty_on_sale(kitty_id).is_none(), Error::<T>::KittyAlreadyOnSale);
 
-			<KittyOnSale<T>>::insert(kitty_id, ());
+			KittyOnSale::<T>::insert(kitty_id, ());
 			Self::deposit_event(Event::KittyOnSale { account: signer, kitty_id });
 			Ok(())
 		}
@@ -194,8 +200,8 @@ mod pallet {
 			let price = T::KittyPrice::get();
 
 			T::Currency::transfer(&signer, &owner, price, ExistenceRequirement::KeepAlive)?;
-			<KittyOwner<T>>::insert(kitty_id, &signer);
-			<KittyOnSale<T>>::remove(kitty_id);
+			KittyOwner::<T>::insert(kitty_id, &signer);
+			KittyOnSale::<T>::remove(kitty_id);
 			Self::deposit_event(Event::KittyBought { buyer: signer, kitty_id });
 			Ok(())
 		}
@@ -230,8 +236,8 @@ mod pallet {
 		) -> KittyDna {
 			let selector = Self::random_kitty_dna(&account);
 			let mut dna = KittyDna::default();
-			for i in 0..parent_1.0.len() {
-				dna[i] = (parent_1.0[i] & selector[i]) | (parent_2.0[i] & !selector[i])
+			for i in 0..parent_1.dna.len() {
+				dna[i] = (parent_1.dna[i] & selector[i]) | (parent_2.dna[i] & !selector[i])
 			}
 			return dna
 		}
