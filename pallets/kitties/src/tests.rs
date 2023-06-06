@@ -4,7 +4,7 @@ use frame_support::{assert_noop, assert_ok, pallet_prelude::DispatchResultWithPo
 const ACCOUNT_ID_1: AccountId = 1;
 const ACCOUNT_ID_2: AccountId = 2;
 const KITTY_ID_0: KittyId = 0;
-const KITTY_NAME: KittyName = *b"____";
+const KITTY_NAME: KittyName = *b"12345678";
 
 fn init_balance(account: AccountId, new_free: Balance) -> DispatchResultWithPostInfo {
 	Balances::set_balance(RuntimeOrigin::root(), account, new_free, 0)

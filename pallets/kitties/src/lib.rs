@@ -12,7 +12,9 @@ mod storage;
 
 #[frame_support::pallet]
 mod pallet {
-	use crate::storage;
+	pub use crate::storage::current_version::*;
+
+	use crate::storage::upgrade_storage;
 	use frame_support::{
 		pallet_prelude::*,
 		traits::{Currency, ExistenceRequirement, Randomness},
@@ -21,13 +23,6 @@ mod pallet {
 	use frame_system::pallet_prelude::*;
 	use sp_io::hashing::blake2_128;
 	use sp_runtime::traits::AccountIdConversion;
-
-	////////////////////////////////////////////////////////////////////////////////////////////////////
-
-	pub type KittyId = u32;
-	pub type KittyName = [u8; 4];
-	pub type KittyDna = [u8; 16];
-	pub type Kitty = storage::v1::Kitty;
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// config
@@ -97,13 +92,13 @@ mod pallet {
 	/// pallet
 
 	#[pallet::pallet]
-	#[pallet::storage_version(storage::v1::STORAGE_VERSION)]
+	#[pallet::storage_version(STORAGE_VERSION)]
 	pub struct Pallet<T>(_);
 
 	#[pallet::hooks]
 	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
 		fn on_runtime_upgrade() -> Weight {
-			storage::v1::upgrade::<T>()
+			upgrade_storage::<T>()
 		}
 	}
 
