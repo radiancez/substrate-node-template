@@ -1,6 +1,9 @@
 
 # Kitties 教程(二)
 
+## Node正常启动
+![kitties node jpg](./homework/kitties_2/node.jpg)
+
 ## 单元测试
 ![kitties tests jpg](./homework/kitties_2/tests.jpg)
 
