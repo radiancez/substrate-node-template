@@ -23,6 +23,7 @@ pub fn upgrade<T: Config>() -> Weight {
 	let on_chain_version: StorageVersion = Pallet::<T>::on_chain_storage_version();
 	if on_chain_version == storage::v0::STORAGE_VERSION {
 		v0_to_v1::<T>();
+		STORAGE_VERSION.put::<Pallet::<T>>();
 	}
 
 	Weight::zero()
@@ -37,5 +38,5 @@ fn v0_to_v1<T: Config>() {
 	{
 		let kitty = Kitty { name: *b"____", dna: kitty_v0.0 };
 		Kitties::<T>::insert(kitty_id, &kitty);
-	}
+	}	
 }
