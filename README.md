@@ -1,6 +1,13 @@
 
 # Kitties 教程(二)
 
+## 单元测试
+![kitties tests jpg](./homework/kitties_2/tests.jpg)
+
+## V0 升级到 V2
+![kitties tests jpg](./homework/kitties_2/v0_v2/v0.jpg)
+![kitties tests jpg](./homework/kitties_2/v0_v2/v2.jpg)
+
 # Kitties 教程(一)
 
 ## Kitties加入到Runtime，Node正常启动
