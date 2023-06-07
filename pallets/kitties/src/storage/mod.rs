@@ -10,37 +10,34 @@ mod v0;
 mod v1;
 
 pub(crate) fn upgrade_storage<T: Config>() -> Weight {
-	let current_version = Pallet::<T>::current_storage_version();
-	if current_version != current_version::STORAGE_VERSION {
-		return Weight::zero()
-	}
-
-	let on_chain_version: StorageVersion = Pallet::<T>::on_chain_storage_version();
-	if on_chain_version == v1::STORAGE_VERSION {
-		v1_to_v2::<T>();
-	} else if on_chain_version == v0::STORAGE_VERSION {
-		v0_to_v2::<T>();
+	let on_chain_ver: StorageVersion = Pallet::<T>::on_chain_storage_version();
+	if on_chain_ver == v1::STORAGE_VERSION {
+		from_v1::<T>();
+		current_version::STORAGE_VERSION.put::<Pallet::<T>>();
+	} else if on_chain_ver == v0::STORAGE_VERSION {
+		from_v0::<T>();
+		current_version::STORAGE_VERSION.put::<Pallet::<T>>();
 	}
 
 	Weight::zero()
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-/// v1 -> v2
+/// v1 -> current
 
-fn v1_to_v2<T: Config>() {
+fn from_v1<T: Config>() {
 	let module = Kitties::<T>::module_prefix();
 	let item = Kitties::<T>::storage_prefix();
 
 	for (kitty_id, kitty_old) in
 		storage_key_iter::<v1::KittyId, v1::Kitty, Blake2_128Concat>(module, item).drain()
 	{
-		let kitty = v2::Kitty { name: name_v1_to_v2(&kitty_old.name, b"5678"), dna: kitty_old.dna };
+		let kitty = current_version::Kitty { name: from_name_v1(&kitty_old.name, b"5678"), dna: kitty_old.dna };
 		Kitties::<T>::insert(kitty_id, &kitty);
 	}
 }
 
-fn name_v1_to_v2(name_v1: &v1::KittyName, append: &[u8; 4]) -> v2::KittyName {
+fn from_name_v1(name_v1: &v1::KittyName, append: &[u8; 4]) -> current_version::KittyName {
 	let mut result = [0; 8];
 	result[..4].copy_from_slice(name_v1);
 	result[4..].copy_from_slice(append);
@@ -48,16 +45,16 @@ fn name_v1_to_v2(name_v1: &v1::KittyName, append: &[u8; 4]) -> v2::KittyName {
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-/// v0 -> v2
+/// v0 -> current
 
-fn v0_to_v2<T: Config>() {
+fn from_v0<T: Config>() {
 	let module = Kitties::<T>::module_prefix();
 	let item = Kitties::<T>::storage_prefix();
 
 	for (kitty_id, kitty_old) in
 		storage_key_iter::<v0::KittyId, v0::Kitty, Blake2_128Concat>(module, item).drain()
 	{
-		let kitty = v2::Kitty { name: *b"12345678", dna: kitty_old.0 };
+		let kitty = current_version::Kitty { name: *b"12345678", dna: kitty_old.0 };
 		Kitties::<T>::insert(kitty_id, &kitty);
 	}
 }
