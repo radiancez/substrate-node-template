@@ -5,8 +5,13 @@
 ![kitties tests jpg](./homework/kitties_2/tests.jpg)
 
 ## V0 升级到 V2
-![kitties tests jpg](./homework/kitties_2/v0_v2/v0.jpg)
-![kitties tests jpg](./homework/kitties_2/v0_v2/v2.jpg)
+![kitties v0 jpg](./homework/kitties_2/v0_v2/v0.jpg)
+![kitties v2 jpg](./homework/kitties_2/v0_v2/v2.jpg)
+
+## 重置链， V0 升级到 V1，再升级到 V2
+![kitties v0 png](./homework/kitties_2/v0_v1_v2/v0.png)
+![kitties v1 png](./homework/kitties_2/v0_v1_v2/v1.png)
+![kitties v2 png](./homework/kitties_2/v0_v1_v2/v2.png)
 
 # Kitties 教程(一)
 
