@@ -41,7 +41,25 @@ mod pallet {
 	pub struct Pallet<T>(_);
 
 	#[pallet::hooks]
-	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {}
+	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
+		fn on_initialize(block_number: T::BlockNumber) -> Weight {
+			log::info!("[ {:?} ] on_initialize ========================================", block_number);
+			Weight::from_parts(0, 0)
+		}
+
+		fn on_finalize(block_number: T::BlockNumber) {
+			log::info!("[ {:?} ] on_finalize", block_number);
+		}
+
+		fn on_idle(block_number: T::BlockNumber, remaining_weight: Weight) -> Weight {
+			log::info!("[ {:?} ] on_idle, {:?}", block_number, remaining_weight);
+			Weight::from_parts(0, 0)
+		}
+
+		fn offchain_worker(block_number: T::BlockNumber) {
+			log::info!("[ {:?} ] offchain_worker", block_number);
+		}
+	}
 
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {}
