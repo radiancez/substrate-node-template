@@ -271,6 +271,11 @@ impl pallet_template::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 }
 
+// pallet-template-2
+impl pallet_template_2::Config for Runtime {
+	type RuntimeEvent = RuntimeEvent;
+}
+
 // pallet-poe
 impl pallet_poe::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
@@ -290,6 +295,11 @@ impl pallet_kitties::Config for Runtime {
 	type KittyPrice = KittyPrice;
 }
 
+// pallet-ocw
+impl pallet_ocw::Config for Runtime {
+	type RuntimeEvent = RuntimeEvent;
+}
+
 // Create the runtime by composing the FRAME pallets that were previously configured.
 construct_runtime!(
 	pub struct Runtime
@@ -305,11 +315,14 @@ construct_runtime!(
 		Balances: pallet_balances,
 		TransactionPayment: pallet_transaction_payment,
 		Sudo: pallet_sudo,
+		//
 		InsecureRandomnessCollectiveFlip: pallet_insecure_randomness_collective_flip,
-		// Include the custom logic from the pallet-template in the runtime.
-		TemplateModule: pallet_template,
+		//
+		TemplateModule: pallet_template, // Include the custom logic from the pallet-template
+		PalletTemplate: pallet_template_2,
 		PalletPoe: pallet_poe,
 		PalletKitties: pallet_kitties,
+		PalletOcw: pallet_ocw,
 	}
 );
 

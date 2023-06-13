@@ -4247,9 +4247,11 @@ dependencies = [
  "pallet-grandpa",
  "pallet-insecure-randomness-collective-flip",
  "pallet-kitties",
+ "pallet-ocw",
  "pallet-poe",
  "pallet-sudo",
  "pallet-template",
+ "pallet-template-2",
  "pallet-timestamp",
  "pallet-transaction-payment",
  "pallet-transaction-payment-rpc-runtime-api",
@@ -4563,6 +4565,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "pallet-ocw"
+version = "0.1.0"
+dependencies = [
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
+ "parity-scale-codec",
+ "scale-info",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+]
+
+[[package]]
 name = "pallet-poe"
 version = "0.1.0"
 dependencies = [
@@ -4614,6 +4630,20 @@ dependencies = [
 [[package]]
 name = "pallet-template"
 version = "4.0.0-dev"
+dependencies = [
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
+ "parity-scale-codec",
+ "scale-info",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+]
+
+[[package]]
+name = "pallet-template-2"
+version = "0.1.0"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
