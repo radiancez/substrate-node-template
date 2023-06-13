@@ -13,10 +13,10 @@ pub(crate) fn upgrade_storage<T: Config>() -> Weight {
 	let on_chain_ver: StorageVersion = Pallet::<T>::on_chain_storage_version();
 	if on_chain_ver == v1::STORAGE_VERSION {
 		from_v1::<T>();
-		current_version::STORAGE_VERSION.put::<Pallet::<T>>();
+		current_version::STORAGE_VERSION.put::<Pallet<T>>();
 	} else if on_chain_ver == v0::STORAGE_VERSION {
 		from_v0::<T>();
-		current_version::STORAGE_VERSION.put::<Pallet::<T>>();
+		current_version::STORAGE_VERSION.put::<Pallet<T>>();
 	}
 
 	Weight::zero()
@@ -32,7 +32,10 @@ fn from_v1<T: Config>() {
 	for (kitty_id, kitty_old) in
 		storage_key_iter::<v1::KittyId, v1::Kitty, Blake2_128Concat>(module, item).drain()
 	{
-		let kitty = current_version::Kitty { name: from_name_v1(&kitty_old.name, b"5678"), dna: kitty_old.dna };
+		let kitty = current_version::Kitty {
+			name: from_name_v1(&kitty_old.name, b"5678"),
+			dna: kitty_old.dna,
+		};
 		Kitties::<T>::insert(kitty_id, &kitty);
 	}
 }
