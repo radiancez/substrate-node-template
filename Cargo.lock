@@ -4247,6 +4247,7 @@ dependencies = [
  "pallet-grandpa",
  "pallet-insecure-randomness-collective-flip",
  "pallet-kitties",
+ "pallet-ocw-homework",
  "pallet-ocw-tutorials",
  "pallet-poe",
  "pallet-sudo",
@@ -4557,6 +4558,21 @@ dependencies = [
  "frame-system",
  "pallet-balances",
  "pallet-insecure-randomness-collective-flip",
+ "parity-scale-codec",
+ "scale-info",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+]
+
+[[package]]
+name = "pallet-ocw-homework"
+version = "0.1.0"
+dependencies = [
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
+ "log",
  "parity-scale-codec",
  "scale-info",
  "sp-core",
