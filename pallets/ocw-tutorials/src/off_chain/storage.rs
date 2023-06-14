@@ -1,9 +1,21 @@
-use crate::Config;
+use crate::{utils, Config};
 use codec::Encode;
 use frame_support::inherent::Vec;
 use sp_runtime::offchain::storage::{MutateStorageError, StorageRetrievalError, StorageValueRef};
 
-pub(crate) fn set_storage_value<T: Config>(block_number: T::BlockNumber) {
+pub(crate) fn test_storage_access<T: Config>(block_number: T::BlockNumber) {
+	// 奇数块写入，偶数块取出
+	if utils::is_odd_block_number::<T>(block_number) {
+		// 写 sp_runtime::offchain::storage::StorageValueRef
+		set_storage_value::<T>(block_number);
+		mutate_storage_value::<T>(block_number);
+	} else {
+		// 读 sp_runtime::offchain::storage::StorageValueRef
+		get_storage_value::<T>(block_number);
+	}
+}
+
+fn set_storage_value<T: Config>(block_number: T::BlockNumber) {
 	let key = derive_key::<T>(block_number);
 	let val_ref = StorageValueRef::persistent(&key);
 
@@ -58,7 +70,7 @@ pub(crate) fn mutate_storage_value<T: Config>(block_number: T::BlockNumber) {
 	}
 }
 
-pub(crate) fn get_storage_value<T: Config>(block_number: T::BlockNumber) {
+fn get_storage_value<T: Config>(block_number: T::BlockNumber) {
 	let key = derive_key::<T>(block_number - 1u32.into());
 	let mut val_ref = StorageValueRef::persistent(&key);
 

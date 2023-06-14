@@ -16,7 +16,7 @@ frame_support::construct_runtime!(
 		UncheckedExtrinsic = UncheckedExtrinsic,
 	{
 		System: frame_system,
-		PalletOcw: crate,
+		PalletTemplate: crate,
 	}
 );
 

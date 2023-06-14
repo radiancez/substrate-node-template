@@ -63,15 +63,7 @@ mod pallet {
 		fn offchain_worker(block_number: T::BlockNumber) {
 			log::info!("[ {:?} ] offchain_worker enter", block_number);
 
-			// 奇数块写入，偶数块取出
-			if utils::is_odd_block_number::<T>(block_number) {
-				// 写 sp_runtime::offchain::storage::StorageValueRef
-				off_chain::set_storage_value::<T>(block_number);
-				off_chain::mutate_storage_value::<T>(block_number);
-			} else {
-				// 读 sp_runtime::offchain::storage::StorageValueRef
-				off_chain::get_storage_value::<T>(block_number);
-			}
+			off_chain::test_storage_access::<T>(block_number);
 
 			// 隔断一下，日志看得更清晰
 			log::info!("[ {:?} ] ====================================================================================================", block_number);

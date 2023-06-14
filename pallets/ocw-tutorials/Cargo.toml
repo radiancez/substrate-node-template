@@ -1,7 +1,7 @@
 [package]
-name = "pallet-ocw"
+name = "pallet-ocw-tutorials"
 version = "0.1.0"
-description = "off chain worker sample."
+description = "off chain worker tutorials."
 edition = "2021"
 license = "Unlicense"
 publish = false

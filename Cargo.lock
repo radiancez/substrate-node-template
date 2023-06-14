@@ -4247,7 +4247,7 @@ dependencies = [
  "pallet-grandpa",
  "pallet-insecure-randomness-collective-flip",
  "pallet-kitties",
- "pallet-ocw",
+ "pallet-ocw-tutorials",
  "pallet-poe",
  "pallet-sudo",
  "pallet-template",
@@ -4565,7 +4565,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "pallet-ocw"
+name = "pallet-ocw-tutorials"
 version = "0.1.0"
 dependencies = [
  "frame-benchmarking",

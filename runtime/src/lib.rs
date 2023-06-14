@@ -295,8 +295,8 @@ impl pallet_kitties::Config for Runtime {
 	type KittyPrice = KittyPrice;
 }
 
-// pallet-ocw
-impl pallet_ocw::Config for Runtime {
+// pallet-ocw-tutorials
+impl pallet_ocw_tutorials::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 }
 
@@ -322,7 +322,7 @@ construct_runtime!(
 		PalletTemplate: pallet_template_2,
 		PalletPoe: pallet_poe,
 		PalletKitties: pallet_kitties,
-		PalletOcw: pallet_ocw,
+		PalletOcwTutorials: pallet_ocw_tutorials,
 	}
 );
 
