@@ -13,7 +13,7 @@ mod utils;
 
 #[frame_support::pallet]
 mod pallet {
-	use crate::{off_chain, utils};
+	use crate::off_chain;
 	use frame_support::pallet_prelude::*;
 	use frame_system::pallet_prelude::*;
 
@@ -68,7 +68,7 @@ mod pallet {
 			// 隔断一下，日志看得更清晰
 			log::info!("[ {:?} ] ====================================================================================================", block_number);
 
-			utils::sleep(8000); // 推迟 offchain_worker leave，证明 offchain_worker 生命周期与出块是解耦的
+			off_chain::sleep(8000); // 推迟 offchain_worker leave，证明 offchain_worker 生命周期与出块是解耦的
 			log::info!("[ {:?} ] offchain_worker leave", block_number);
 		}
 	}
