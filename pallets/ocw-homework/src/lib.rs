@@ -8,6 +8,8 @@ mod mock;
 #[cfg(test)]
 mod tests;
 
+mod offchain;
+
 #[frame_support::pallet]
 mod pallet {
 	use frame_support::pallet_prelude::*;
@@ -51,5 +53,15 @@ mod pallet {
 	}
 
 	#[pallet::call]
-	impl<T: Config> Pallet<T> {}
+	impl<T: Config> Pallet<T> {
+		#[pallet::call_index(0)]
+		#[pallet::weight(0)]
+		pub fn extrinsic(origin: OriginFor<T>) -> DispatchResult {
+			let _signer = ensure_signed(origin)?;
+
+			crate::offchain::derived_key(frame_system::Pallet::<T>::block_number(), b"indexing_1");
+
+			Ok(())
+		}
+	}
 }

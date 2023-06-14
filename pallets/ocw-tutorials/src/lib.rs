@@ -8,12 +8,11 @@ mod mock;
 #[cfg(test)]
 mod tests;
 
-mod off_chain;
+mod offchain;
 mod utils;
 
 #[frame_support::pallet]
 mod pallet {
-	use crate::off_chain;
 	use frame_support::pallet_prelude::*;
 	use frame_system::pallet_prelude::*;
 
@@ -63,12 +62,12 @@ mod pallet {
 		fn offchain_worker(block_number: T::BlockNumber) {
 			log::info!("[ {:?} ] offchain_worker enter", block_number);
 
-			off_chain::test_storage_access::<T>(block_number);
+			crate::offchain::test_storage_access::<T>(block_number);
 
 			// 隔断一下，日志看得更清晰
 			log::info!("[ {:?} ] ====================================================================================================", block_number);
 
-			off_chain::sleep(8000); // 推迟 offchain_worker leave，证明 offchain_worker 生命周期与出块是解耦的
+			crate::offchain::sleep(8000); // 推迟 offchain_worker leave，证明 offchain_worker 生命周期与出块是解耦的
 			log::info!("[ {:?} ] offchain_worker leave", block_number);
 		}
 	}

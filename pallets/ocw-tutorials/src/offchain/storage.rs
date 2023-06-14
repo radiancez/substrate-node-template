@@ -16,7 +16,7 @@ pub(crate) fn test_storage_access<T: Config>(block_number: T::BlockNumber) {
 }
 
 fn set_storage_value<T: Config>(block_number: T::BlockNumber) {
-	let key = derive_key::<T>(block_number);
+	let key = derived_key::<T>(block_number);
 	let val_ref = StorageValueRef::persistent(&key);
 
 	//  get a local random value
@@ -34,7 +34,7 @@ fn set_storage_value<T: Config>(block_number: T::BlockNumber) {
 }
 
 pub(crate) fn mutate_storage_value<T: Config>(block_number: T::BlockNumber) {
-	let key = derive_key::<T>(block_number);
+	let key = derived_key::<T>(block_number);
 	let val_ref = StorageValueRef::persistent(&key);
 
 	//  get a local random value
@@ -71,7 +71,7 @@ pub(crate) fn mutate_storage_value<T: Config>(block_number: T::BlockNumber) {
 }
 
 fn get_storage_value<T: Config>(block_number: T::BlockNumber) {
-	let key = derive_key::<T>(block_number - 1u32.into());
+	let key = derived_key::<T>(block_number - 1u32.into());
 	let mut val_ref = StorageValueRef::persistent(&key);
 
 	// get from db by key
@@ -84,7 +84,7 @@ fn get_storage_value<T: Config>(block_number: T::BlockNumber) {
 }
 
 #[deny(clippy::clone_double_ref)]
-fn derive_key<T: Config>(block_number: T::BlockNumber) -> Vec<u8> {
+fn derived_key<T: Config>(block_number: T::BlockNumber) -> Vec<u8> {
 	block_number.using_encoded(|encoded_bn| {
 		b"node-template::storage::"
 			.iter()
