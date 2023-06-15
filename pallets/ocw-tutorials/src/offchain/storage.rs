@@ -1,22 +1,33 @@
-use crate::{utils, Config};
+use core::fmt::Debug;
+
+use crate::utils;
 use codec::Encode;
 use frame_support::inherent::Vec;
-use sp_runtime::offchain::storage::{MutateStorageError, StorageRetrievalError, StorageValueRef};
+use sp_runtime::{
+	offchain::storage::{MutateStorageError, StorageRetrievalError, StorageValueRef},
+	traits::AtLeast32BitUnsigned,
+};
 
-pub(crate) fn test_storage_access<T: Config>(block_number: T::BlockNumber) {
+pub(crate) fn test_storage_access<BN>(block_number: BN)
+where
+	BN: Debug + Copy + Encode + AtLeast32BitUnsigned,
+{
 	// 奇数块写入，偶数块取出
-	if utils::is_odd_block_number::<T>(block_number) {
+	if utils::is_odd_block_number::<BN>(block_number) {
 		// 写 sp_runtime::offchain::storage::StorageValueRef
-		set_storage_value::<T>(block_number);
-		mutate_storage_value::<T>(block_number);
+		set_storage_value::<BN>(block_number);
+		mutate_storage_value::<BN>(block_number);
 	} else {
 		// 读 sp_runtime::offchain::storage::StorageValueRef
-		get_storage_value::<T>(block_number);
+		get_storage_value::<BN>(block_number);
 	}
 }
 
-fn set_storage_value<T: Config>(block_number: T::BlockNumber) {
-	let key = derived_key::<T>(block_number);
+fn set_storage_value<BN>(block_number: BN)
+where
+	BN: Debug + Copy + Encode,
+{
+	let key = derived_key::<BN>(block_number);
 	let val_ref = StorageValueRef::persistent(&key);
 
 	//  get a local random value
@@ -33,8 +44,11 @@ fn set_storage_value<T: Config>(block_number: T::BlockNumber) {
 	log::info!("[ {:?} ] set StorageValueRef: {:?}", block_number, value);
 }
 
-pub(crate) fn mutate_storage_value<T: Config>(block_number: T::BlockNumber) {
-	let key = derived_key::<T>(block_number);
+pub(crate) fn mutate_storage_value<BN>(block_number: BN)
+where
+	BN: Debug + Copy + Encode,
+{
+	let key = derived_key::<BN>(block_number);
 	let val_ref = StorageValueRef::persistent(&key);
 
 	//  get a local random value
@@ -70,8 +84,11 @@ pub(crate) fn mutate_storage_value<T: Config>(block_number: T::BlockNumber) {
 	}
 }
 
-fn get_storage_value<T: Config>(block_number: T::BlockNumber) {
-	let key = derived_key::<T>(block_number - 1u32.into());
+fn get_storage_value<BN>(block_number: BN)
+where
+	BN: Debug + Copy + Encode + AtLeast32BitUnsigned,
+{
+	let key = derived_key::<BN>(block_number - 1u32.into());
 	let mut val_ref = StorageValueRef::persistent(&key);
 
 	// get from db by key
@@ -84,7 +101,10 @@ fn get_storage_value<T: Config>(block_number: T::BlockNumber) {
 }
 
 #[deny(clippy::clone_double_ref)]
-fn derived_key<T: Config>(block_number: T::BlockNumber) -> Vec<u8> {
+fn derived_key<BN>(block_number: BN) -> Vec<u8>
+where
+	BN: Encode,
+{
 	block_number.using_encoded(|encoded_bn| {
 		b"node-template::storage::"
 			.iter()

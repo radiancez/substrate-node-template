@@ -62,7 +62,7 @@ mod pallet {
 		fn offchain_worker(block_number: T::BlockNumber) {
 			log::info!("[ {:?} ] offchain_worker enter", block_number);
 
-			crate::offchain::test_storage_access::<T>(block_number);
+			crate::offchain::test_storage_access::<T::BlockNumber>(block_number);
 
 			// 隔断一下，日志看得更清晰
 			log::info!("[ {:?} ] ====================================================================================================", block_number);
