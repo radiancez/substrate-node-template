@@ -287,10 +287,10 @@ construct_runtime!(
 		Balances: pallet_balances,
 		TransactionPayment: pallet_transaction_payment,
 		Sudo: pallet_sudo,
+		// Include the custom logic from the pallet-template in the runtime.
+		TemplateModule: pallet_template,
 		//
 		InsecureRandomnessCollectiveFlip: pallet_insecure_randomness_collective_flip,
-		//
-		TemplateModule: pallet_template, // Include the custom logic from the pallet-template
 		PalletTemplate: pallet_template_2,
 		PalletPoe: pallet_poe,
 		PalletKitties: pallet_kitties,
