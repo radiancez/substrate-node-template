@@ -1,8 +1,7 @@
 use crate::{
 	Balance, Balances, InsecureRandomnessCollectiveFlip, Runtime, RuntimeEvent, EXISTENTIAL_DEPOSIT,
 };
-pub use frame_support::parameter_types;
-use frame_support::PalletId;
+use frame_support::{parameter_types, PalletId};
 use sp_core::ConstU32;
 
 // pallet-insecure-randomness-collective-flip

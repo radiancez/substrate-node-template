@@ -86,15 +86,21 @@ mod pallet {
 			) {
 				match res {
 					Ok(()) => {
-						log::info!("OCW ==> unsigned tx with signed payload successfully sent.");
+						log::info!(
+							"[ {:?} ] unsigned tx with signed payload successfully sent.",
+							block_number
+						);
 					},
 					Err(()) => {
-						log::error!("OCW ==> sending unsigned tx with signed payload failed.");
+						log::error!(
+							"[ {:?} ] sending unsigned tx with signed payload failed.",
+							block_number
+						);
 					},
 				};
 			} else {
 				// The case of `None`: no account is available for sending
-				log::error!("OCW ==> No local account available");
+				log::error!("[ {:?} ] No local account available", block_number);
 			}
 
 			// 隔断一下，日志看得更清晰
@@ -122,11 +128,6 @@ mod pallet {
 					.build()
 			};
 
-			// match call {
-			// 	Call::submit_data_unsigned { key: _ } => valid_tx(b"my_unsigned_tx".to_vec()),
-			// 	_ => InvalidTransaction::Call.into(),
-			// }
-
 			match call {
 				Call::unsigned_extrinsic_with_signed_payload { ref payload, ref signature } => {
 					if !SignedPayload::<T>::verify::<T::AppCrypto>(payload, signature.clone()) {
@@ -147,7 +148,10 @@ mod pallet {
 			let _signer = ensure_signed(origin)?;
 
 			// offchain index 写入 local storage
-			crate::offchain::offchain_index_set(frame_system::Pallet::<T>::block_number(), number);
+			crate::offchain::indexing::offchain_index_set(
+				frame_system::Pallet::<T>::block_number(),
+				number,
+			);
 
 			Ok(())
 		}
@@ -162,10 +166,11 @@ mod pallet {
 			ensure_none(origin)?;
 
 			log::info!(
-				"OCW ==> in call unsigned_extrinsic_with_signed_payload: {:?}",
-				payload.number
+				"[ {:?} ] in call unsigned_extrinsic_with_signed_payload: {:?}",
+				frame_system::Pallet::<T>::block_number(),
+				payload.number,
 			);
-			// Return a successful DispatchResultWithPostInfo
+
 			Ok(())
 		}
 	}
