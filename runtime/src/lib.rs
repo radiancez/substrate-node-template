@@ -35,7 +35,7 @@ pub use frame_support::{
 		},
 		IdentityFee, Weight,
 	},
-	PalletId, StorageValue,
+	StorageValue,
 };
 pub use frame_system::Call as SystemCall;
 pub use pallet_balances::Call as BalancesCall;
@@ -69,6 +69,7 @@ pub type Hash = sp_core::H256;
 
 //
 mod offchain;
+mod pallets;
 
 /// Opaque types. These are used by the CLI to instantiate machinery that don't need to know
 /// the specifics of the runtime. They can then be made to be agnostic over specific formats
@@ -266,47 +267,9 @@ impl pallet_sudo::Config for Runtime {
 	type RuntimeCall = RuntimeCall;
 }
 
-// pallet-insecure-randomness-collective-flip
-impl pallet_insecure_randomness_collective_flip::Config for Runtime {}
-
 /// Configure the pallet-template in pallets/template.
 impl pallet_template::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
-}
-
-// pallet-template-2
-impl pallet_template_2::Config for Runtime {
-	type RuntimeEvent = RuntimeEvent;
-}
-
-// pallet-poe
-impl pallet_poe::Config for Runtime {
-	type RuntimeEvent = RuntimeEvent;
-	type MaxClaimLength = ConstU32<512>;
-}
-
-// pallet-kitties
-parameter_types! {
-	pub KittiesPalletId: PalletId = PalletId(*b"py/kitty");
-	pub KittyPrice: Balance = EXISTENTIAL_DEPOSIT * 1000;
-}
-impl pallet_kitties::Config for Runtime {
-	type RuntimeEvent = RuntimeEvent;
-	type PalletId = KittiesPalletId;
-	type Currency = Balances;
-	type KittyDnaRandomness = InsecureRandomnessCollectiveFlip;
-	type KittyPrice = KittyPrice;
-}
-
-// pallet-ocw-tutorials
-// impl pallet_ocw_tutorials::Config for Runtime {
-// 	type RuntimeEvent = RuntimeEvent;
-// }
-
-// pallet-ocw-homework
-impl pallet_ocw_homework::Config for Runtime {
-	type RuntimeEvent = RuntimeEvent;
-	type AppCrypto = offchain::app_crypto::AppCryptoSr25519;
 }
 
 // Create the runtime by composing the FRAME pallets that were previously configured.
