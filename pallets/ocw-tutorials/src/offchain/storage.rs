@@ -1,7 +1,6 @@
-use core::fmt::Debug;
-
 use crate::utils;
 use codec::Encode;
+use core::fmt::Debug;
 use frame_support::inherent::Vec;
 use sp_runtime::{
 	offchain::storage::{MutateStorageError, StorageRetrievalError, StorageValueRef},

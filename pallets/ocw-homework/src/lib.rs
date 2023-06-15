@@ -56,10 +56,11 @@ mod pallet {
 	impl<T: Config> Pallet<T> {
 		#[pallet::call_index(0)]
 		#[pallet::weight(0)]
-		pub fn extrinsic(origin: OriginFor<T>) -> DispatchResult {
+		pub fn offchain_index_set(origin: OriginFor<T>, number: u64) -> DispatchResult {
 			let _signer = ensure_signed(origin)?;
 
-			crate::offchain::derived_key(frame_system::Pallet::<T>::block_number(), b"indexing_1");
+			// offchain index 写入 local storage
+			crate::offchain::offchain_index_set(frame_system::Pallet::<T>::block_number(), number);
 
 			Ok(())
 		}
