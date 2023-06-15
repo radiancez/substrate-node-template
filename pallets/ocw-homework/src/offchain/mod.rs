@@ -1,4 +1,4 @@
-use codec::{Encode, Decode};
+use codec::{Decode, Encode};
 use sp_io::offchain_index;
 use sp_std::vec::Vec;
 
