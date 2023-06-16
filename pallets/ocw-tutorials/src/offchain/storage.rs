@@ -1,11 +1,11 @@
 use crate::utils;
 use codec::Encode;
 use core::fmt::Debug;
-use frame_support::inherent::Vec;
 use sp_runtime::{
 	offchain::storage::{MutateStorageError, StorageRetrievalError, StorageValueRef},
 	traits::AtLeast32BitUnsigned,
 };
+use sp_std::vec::Vec;
 
 pub(crate) fn test_storage_access<BN>(block_number: BN)
 where
