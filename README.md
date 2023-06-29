@@ -1,4 +1,12 @@
 
+# benchmark & build-spec
+
+## benchmark
+![benchmark jpg](./homework/poe/benchmark.jpg)
+
+## build-spec
+![build-spec jpg](./homework/poe/build-spec.jpg)
+
 # Offchain Worker
 
 ## 链上随机数与链下随机数的区别
