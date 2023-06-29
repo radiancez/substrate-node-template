@@ -15,9 +15,9 @@ mod benchmarking;
 
 #[frame_support::pallet]
 mod pallet {
+	use crate::weights::WeightInfo;
 	use frame_support::pallet_prelude::*;
 	use frame_system::pallet_prelude::*;
-	use crate::weights::WeightInfo;
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// config
@@ -101,7 +101,7 @@ mod pallet {
 		}
 
 		#[pallet::call_index(1)]
-		#[pallet::weight(0)]
+		#[pallet::weight(T::WeightInfo::revoke_claim(claim.len() as u32))]
 		pub fn revoke_claim(
 			origin: OriginFor<T>,
 			claim: BoundedVec<u8, T::MaxClaimLength>,
@@ -118,7 +118,7 @@ mod pallet {
 		}
 
 		#[pallet::call_index(2)]
-		#[pallet::weight(0)]
+		#[pallet::weight(T::WeightInfo::transfer_claim(claim.len() as u32))]
 		pub fn transfer_claim(
 			origin: OriginFor<T>,
 			recipient: T::AccountId,
